@@ -14,6 +14,7 @@
     const channelName = "cuesport-vision-" + instanceId;
     const MIN_CONFIDENCE = 0.97;
     const MAX_EVENT_AGE_MS = 3000;
+    const REVIEW_WINDOW_MS = 15000;
     const EVENT_RETENTION_MS = 30000;
     const BALL_COOLDOWN_MS = 1200;
     const MAX_PENDING = 12;
@@ -80,7 +81,7 @@
         const index = pending.findIndex(function (event) { return event.eventId === eventId; });
         if (index < 0) return;
         const event = pending[index];
-        if (Date.now() - event.timestamp > MAX_EVENT_AGE_MS) {
+        if (Date.now() - event.receivedAt > REVIEW_WINDOW_MS) {
             dismissCandidate(eventId);
             status("Candidate expired. Wait for a fresh camera event.", true);
             return;
@@ -139,7 +140,7 @@
             return;
         }
         if (pending.length >= MAX_PENDING) pending.shift();
-        pending.push(event);
+        pending.push(Object.assign({}, event, { receivedAt: Date.now() }));
         renderQueue();
         status("Pocket candidate received. Review it below; no score has been changed.", false);
     }
