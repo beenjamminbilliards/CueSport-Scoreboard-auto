@@ -30,12 +30,12 @@ A camera adapter may report a *candidate* pocket event using this shape:
 }
 ```
 
-The receiver must validate the schema, instance, ball number, timestamp, confidence, and event ID. Events must be deduplicated. A candidate must not change the score unless automatic scoring has been explicitly enabled by the operator. Low-confidence, stale, duplicate, or ambiguous events must be ignored or presented for manual confirmation.
+The receiver must validate the schema, instance, ball number, timestamp, confidence, and event ID. Events must be deduplicated. A candidate must never change the score on receipt. The current bridge places valid candidates in an operator review queue; only an explicit Confirm click calls the scoreboard scoring handler. Dismiss does not change the score. Candidates are deduplicated, checked against the scoreboard instance, and expire after a short review window. The 0.97 threshold is a conservative prototype gate, not a measured accuracy guarantee.
 
 ## Integration rules
 
-1. Never write `ballState`, player scores, or overlay state directly from the vision process.
-2. Route an accepted pocket event through the existing `togglePot(document.getElementById("ball " + ballNumber))` scoring handler, after checking that the ball is currently available and the game is not locked.
+1. Never write `ballState`, player scores, or overlay state directly from the vision process.\n2. Treat all vision output as untrusted suggestions; the operator remains the scoring authority.
+2. Route only an operator-confirmed pocket candidate through the existing `togglePot(document.getElementById("ball " + ballNumber))` scoring handler, after checking that the ball is currently available and the game is not locked.
 3. Do not toggle an already-faded ball. The action must be idempotent at the event layer.
 4. Keep undo behavior owned by the scoreboard.
 5. Do not assume the remote Floot dashboard can access scoreboard local storage or BroadcastChannel across origins. A same-origin bridge or authenticated relay is required.
